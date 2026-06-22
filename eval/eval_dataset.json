@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What was Q3 FY2024 revenue and how did it change year over year?",
+    "expected_source": "2024_Q3_financial_review.md",
+    "reference_answer": "Revenue was $48.2M, up 12% YoY from $43.0M."
+  },
+  {
+    "question": "What drove the revenue growth in Q3?",
+    "expected_source": "2024_Q3_financial_review.md",
+    "reference_answer": "Cloud Analytics subscriptions grew 24% YoY, offsetting a 9% decline in legacy on-prem licenses."
+  },
+  {
+    "question": "What was voluntary attrition and which department had the highest attrition?",
+    "expected_source": "hr_attrition_report_2024.md",
+    "reference_answer": "Voluntary attrition was 14.2% TTM; Engineering was highest at 18%."
+  },
+  {
+    "question": "What is the OTIF delivery rate and what is the target?",
+    "expected_source": "supply_chain_operations_review_2024.md",
+    "reference_answer": "OTIF was 94.3%, just below the 95% target."
+  },
+  {
+    "question": "What is the biggest supply chain risk noted in the report?",
+    "expected_source": "supply_chain_operations_review_2024.md",
+    "reference_answer": "A single-source dependency for component X from a supplier in Shenzhen."
+  },
+  {
+    "question": "Which marketing channel had the best ROI and which was weakest?",
+    "expected_source": "marketing_campaign_performance_q3_2024.md",
+    "reference_answer": "Webinars were best at 5.2x ROI; events were weakest at 1.4x."
+  },
+  {
+    "question": "Which sales region is growing fastest and by how much?",
+    "expected_source": "regional_sales_review_2024.txt",
+    "reference_answer": "APAC, growing 31% year over year."
+  },
+  {
+    "question": "What was the average deal size and win rate?",
+    "expected_source": "regional_sales_review_2024.txt",
+    "reference_answer": "Average deal size $42K; win rate 23%."
+  },
+  {
+    "question": "What were the 30-day retention and product NPS?",
+    "expected_source": "product_analytics_review_2024.md",
+    "reference_answer": "30-day retention was 62%; NPS was 44."
+  },
+  {
+    "question": "What is the CEO's individual compensation package?",
+    "expected_source": null,
+    "reference_answer": "Not in the reports — the assistant should abstain."
+  }
+]

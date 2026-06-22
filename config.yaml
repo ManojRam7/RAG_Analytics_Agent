@@ -1,0 +1,24 @@
+# Central configuration for the RAG Analytics Assistant.
+# Environment variables (see .env.example) override the provider fields below.
+
+embeddings:
+  # auto -> sentence-transformers if installed, else OpenAI if key set, else hashing.
+  provider: auto
+  model: sentence-transformers/all-MiniLM-L6-v2
+  hashing_dim: 1024            # used only by the dependency-free hashing fallback
+
+llm:
+  # auto -> Anthropic (if key) -> OpenAI (if key) -> local flan-t5 (if installed) -> extractive
+  provider: auto
+  model: ""                    # blank = sensible default per provider
+  temperature: 0.1
+  max_tokens: 512
+
+retrieval:
+  k: 4                         # number of report chunks retrieved per question
+  chunk_size: 800
+  chunk_overlap: 120
+
+paths:
+  reports_dir: data/reports
+  index_dir: data/index

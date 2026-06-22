@@ -1,0 +1,19 @@
+# Core dependencies — this minimal set runs the assistant end-to-end for FREE,
+# fully offline, using local hashing embeddings + an extractive answer engine.
+# (Install requirements-llm.txt and/or requirements-api.txt to upgrade quality.)
+#
+# Tested with langchain 0.3.x on Python 3.10. Versions are lower-bounded only so
+# pip can resolve the latest compatible release.
+langchain>=0.2
+langchain-community>=0.2
+langchain-core>=0.2
+langchain-text-splitters>=0.2
+faiss-cpu>=1.7
+scikit-learn>=1.3
+numpy>=1.24
+pandas>=2.0
+pypdf>=4.0
+docx2txt>=0.8
+PyYAML>=6.0
+python-dotenv>=1.0
+streamlit>=1.30

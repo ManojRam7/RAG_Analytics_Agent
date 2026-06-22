@@ -1,0 +1,5 @@
+# OPTIONAL — cloud API backends for best answer quality.
+# Set ANTHROPIC_API_KEY or OPENAI_API_KEY in your .env to activate.
+#   pip install -r requirements-api.txt
+langchain-anthropic>=0.1
+langchain-openai>=0.1
