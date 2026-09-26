@@ -1,4 +1,4 @@
-# Central configuration for the RAG Analytics Assistant.
+# Central configuration for the RAG Analytics Agent.
 # Environment variables (see .env.example) override the provider fields below.
 
 embeddings:

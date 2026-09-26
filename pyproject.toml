@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "rag-analytics-assistant"
 version = "0.1.0"
-description = "RAG Analytics Assistant for Business Reports — source-grounded Q&A over business documents."
+description = "RAG Analytics Agent for Business Reports — source-grounded Q&A over business documents."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

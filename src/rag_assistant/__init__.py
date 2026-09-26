@@ -1,4 +1,4 @@
-"""RAG Analytics Assistant for Business Reports.
+"""RAG Analytics Agent for Business Reports.
 
 A retrieval-augmented generation pipeline that answers questions about a corpus
 of business reports and returns *source-grounded* summaries with inline [S#]

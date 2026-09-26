@@ -1,4 +1,4 @@
-# RAG Analytics Assistant for Business Reports
+# RAG Analytics Agent for Business Reports
 
 Ask questions of a folder of business reports and get answers that cite the passage, file and page
 they came from. Reports in PDF, Word, Markdown or text are chunked, embedded into a FAISS index and

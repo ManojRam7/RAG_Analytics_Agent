@@ -1,4 +1,4 @@
-"""Streamlit UI for the RAG Analytics Assistant.
+"""Streamlit UI for the RAG Analytics Agent.
 
 Run with:  streamlit run app.py
 """
@@ -14,7 +14,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "src"))
 from rag_assistant import vectorstore as vs_mod  # noqa: E402
 from rag_assistant.pipeline import RAGPipeline  # noqa: E402
 
-st.set_page_config(page_title="RAG Analytics Assistant", layout="wide")
+st.set_page_config(page_title="RAG Analytics Agent", layout="wide")
 
 SAMPLE_QUESTIONS = [
     "What drove the revenue growth in Q3?",
@@ -38,7 +38,7 @@ def _reports_present(rag: RAGPipeline) -> bool:
 
 
 def main() -> None:
-    st.title("RAG Analytics Assistant for Business Reports")
+    st.title("RAG Analytics Agent for Business Reports")
     st.caption(
         "Ask questions about your business reports and get **source-grounded** answers "
         "with inline [S#] citations. Built with LangChain + FAISS."
