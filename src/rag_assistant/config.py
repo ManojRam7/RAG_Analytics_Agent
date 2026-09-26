@@ -35,14 +35,14 @@ def _resolve(p: str | Path) -> Path:
 
 @dataclass
 class EmbeddingConfig:
-    provider: str = "auto"  # auto | huggingface | openai | hashing
+    provider: str = "auto"  # auto | huggingface | gemini | openai | hashing
     model: str = "sentence-transformers/all-MiniLM-L6-v2"
     hashing_dim: int = 1024
 
 
 @dataclass
 class LLMConfig:
-    provider: str = "auto"  # auto | anthropic | openai | huggingface | extractive
+    provider: str = "auto"  # auto | gemini | openai | huggingface | extractive
     model: str = ""
     temperature: float = 0.1
     max_tokens: int = 512

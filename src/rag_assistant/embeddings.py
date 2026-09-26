@@ -1,7 +1,8 @@
 """Embedding providers with graceful fallback.
 
 Cascade for provider == "auto":
-    sentence-transformers (if installed)  ->  OpenAI (if key)  ->  hashing.
+    sentence-transformers (if installed)  ->  Gemini (if GOOGLE_API_KEY)
+    ->  OpenAI (if OPENAI_API_KEY)  ->  hashing.
 
 ``HashingEmbeddings`` is a stateless, dependency-light fallback (sklearn
 HashingVectorizer). It needs no model download, so the whole pipeline runs
@@ -64,6 +65,17 @@ def get_embeddings(cfg: AppConfig) -> Tuple[Embeddings, str]:
             if provider == "huggingface":
                 raise
             logger.info("sentence-transformers unavailable (%s); trying next option.", exc.__class__.__name__)
+
+    if provider in ("auto", "gemini") and os.getenv("GOOGLE_API_KEY"):
+        try:
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+            model = "models/text-embedding-004"
+            logger.info("Using Gemini embeddings: %s", model)
+            return GoogleGenerativeAIEmbeddings(model=model), f"gemini:{model}"
+        except Exception:  # noqa: BLE001
+            if provider == "gemini":
+                raise
 
     if provider in ("auto", "openai") and os.getenv("OPENAI_API_KEY"):
         try:

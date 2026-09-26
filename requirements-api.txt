@@ -1,5 +1,5 @@
-# OPTIONAL — cloud API backends for best answer quality.
-# Set ANTHROPIC_API_KEY or OPENAI_API_KEY in your .env to activate.
+# Optional cloud backends (Gemini, OpenAI) for generation and embeddings.
+# Set GOOGLE_API_KEY and/or OPENAI_API_KEY in .env to activate.
 #   pip install -r requirements-api.txt
-langchain-anthropic>=0.1
+langchain-google-genai>=1.0
 langchain-openai>=0.1

@@ -1,7 +1,7 @@
 """Answer generators with a graceful cascade.
 
 Provider == "auto" resolves to the best available backend:
-    Anthropic (if ANTHROPIC_API_KEY)  ->  OpenAI (if OPENAI_API_KEY)
+    Gemini (if GOOGLE_API_KEY)  ->  OpenAI (if OPENAI_API_KEY)
     ->  local flan-t5 (if transformers installed)  ->  extractive (always works).
 
 Every generator exposes the same tiny interface::
@@ -51,8 +51,8 @@ class ExtractiveGenerator(BaseGenerator):
     """LLM-free fallback: builds a source-grounded summary by ranking the report
     sentences most relevant to the question (TF-IDF cosine) and citing each one.
 
-    This guarantees the system always returns a grounded, cited answer — even
-    with no API key and no ML models installed.
+    It means the assistant still returns a grounded, cited answer with no API
+    key and no model downloads.
     """
 
     name = "extractive"
@@ -113,18 +113,18 @@ def get_generator(cfg: AppConfig) -> BaseGenerator:
     if provider == "extractive":
         return ExtractiveGenerator()
 
-    if provider in ("auto", "anthropic") and os.getenv("ANTHROPIC_API_KEY"):
+    if provider in ("auto", "gemini") and os.getenv("GOOGLE_API_KEY"):
         try:
-            from langchain_anthropic import ChatAnthropic
+            from langchain_google_genai import ChatGoogleGenerativeAI
 
-            model = cfg.llm.model or "claude-3-5-sonnet-latest"
-            llm = ChatAnthropic(
-                model=model, temperature=cfg.llm.temperature, max_tokens=cfg.llm.max_tokens
+            model = cfg.llm.model or "gemini-2.0-flash"
+            llm = ChatGoogleGenerativeAI(
+                model=model, temperature=cfg.llm.temperature, max_output_tokens=cfg.llm.max_tokens
             )
-            logger.info("Using Anthropic backend: %s", model)
-            return LLMGenerator(llm, f"anthropic:{model}")
+            logger.info("Using Gemini backend: %s", model)
+            return LLMGenerator(llm, f"gemini:{model}")
         except Exception:  # noqa: BLE001
-            if provider == "anthropic":
+            if provider == "gemini":
                 raise
 
     if provider in ("auto", "openai") and os.getenv("OPENAI_API_KEY"):

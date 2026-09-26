@@ -1,6 +1,6 @@
-# Core dependencies — this minimal set runs the assistant end-to-end for FREE,
-# fully offline, using local hashing embeddings + an extractive answer engine.
-# (Install requirements-llm.txt and/or requirements-api.txt to upgrade quality.)
+# Core dependencies: runs the assistant end to end offline, with hashing
+# embeddings and the extractive answer engine. Add requirements-api.txt (Gemini,
+# OpenAI) or requirements-llm.txt (local models) for better answers.
 #
 # Tested with langchain 0.3.x on Python 3.10. Versions are lower-bounded only so
 # pip can resolve the latest compatible release.

@@ -2,13 +2,13 @@
 # Environment variables (see .env.example) override the provider fields below.
 
 embeddings:
-  # auto -> sentence-transformers if installed, else OpenAI if key set, else hashing.
+  # auto -> sentence-transformers if installed, else Gemini / OpenAI if a key is set, else hashing.
   provider: auto
   model: sentence-transformers/all-MiniLM-L6-v2
   hashing_dim: 1024            # used only by the dependency-free hashing fallback
 
 llm:
-  # auto -> Anthropic (if key) -> OpenAI (if key) -> local flan-t5 (if installed) -> extractive
+  # auto -> Gemini (if key) -> OpenAI (if key) -> local flan-t5 (if installed) -> extractive
   provider: auto
   model: ""                    # blank = sensible default per provider
   temperature: 0.1

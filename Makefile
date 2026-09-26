@@ -4,7 +4,7 @@ help:
 	@echo "Targets:"
 	@echo "  setup      Install core (free, offline) dependencies"
 	@echo "  setup-llm  Install optional local-LLM extras (sentence-transformers, flan-t5)"
-	@echo "  setup-api  Install optional cloud API extras (OpenAI/Anthropic)"
+	@echo "  setup-api  Install optional cloud API extras (Gemini, OpenAI)"
 	@echo "  sample     Generate synthetic sample business reports"
 	@echo "  ingest     Build the FAISS index from data/reports"
 	@echo "  run        Launch the Streamlit app"

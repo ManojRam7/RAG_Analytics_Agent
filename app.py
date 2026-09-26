@@ -14,7 +14,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "src"))
 from rag_assistant import vectorstore as vs_mod  # noqa: E402
 from rag_assistant.pipeline import RAGPipeline  # noqa: E402
 
-st.set_page_config(page_title="RAG Analytics Assistant", page_icon="📊", layout="wide")
+st.set_page_config(page_title="RAG Analytics Assistant", layout="wide")
 
 SAMPLE_QUESTIONS = [
     "What drove the revenue growth in Q3?",
@@ -38,7 +38,7 @@ def _reports_present(rag: RAGPipeline) -> bool:
 
 
 def main() -> None:
-    st.title("📊 RAG Analytics Assistant for Business Reports")
+    st.title("RAG Analytics Assistant for Business Reports")
     st.caption(
         "Ask questions about your business reports and get **source-grounded** answers "
         "with inline [S#] citations. Built with LangChain + FAISS."
@@ -52,7 +52,7 @@ def main() -> None:
         st.markdown(f"**LLM backend:** `{rag.generator.name}`")
         st.markdown(f"**Embeddings:** `{rag.embeddings_name}`")
         index_ready = vs_mod.index_exists(rag.cfg.index_path)
-        st.markdown(f"**Index:** {'✅ ready' if index_ready else '⚠️ not built'}")
+        st.markdown(f"**Index:** {'ready' if index_ready else 'not built yet'}")
 
         st.divider()
         k = st.slider("Chunks to retrieve (k)", 1, 10, rag.cfg.retrieval.k)
@@ -78,7 +78,7 @@ def main() -> None:
                 (rag.cfg.reports_path / f.name).write_bytes(f.getbuffer())
             st.success(f"Saved {len(uploaded)} file(s). Rebuild the index to include them.")
 
-        if st.button("🔁 Build / rebuild index", type="primary"):
+        if st.button("Build / rebuild index", type="primary"):
             with st.spinner("Indexing reports…"):
                 try:
                     stats = rag.build_index()
@@ -90,9 +90,9 @@ def main() -> None:
 
         st.divider()
         st.caption(
-            "Tips: set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` in `.env`, or "
-            "`pip install -r requirements-llm.txt`, for higher-quality answers. "
-            "The current backend is shown above."
+            "For better answers set `GOOGLE_API_KEY` (Gemini) or `OPENAI_API_KEY` in `.env`, "
+            "or install `requirements-llm.txt` for local models. "
+            "The active backend is shown above."
         )
 
     # ------------------------------------------------------------------- main

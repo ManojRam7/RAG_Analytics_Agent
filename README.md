@@ -1,174 +1,134 @@
-# 📊 RAG Analytics Assistant for Business Reports
+# RAG Analytics Assistant for Business Reports
 
-A GenAI assistant that uses **retrieval-augmented generation (RAG)** to answer questions about a corpus of business reports and return **source-grounded summaries** — every answer cites the exact report excerpts it came from, so nothing is taken on faith.
+Ask questions of a folder of business reports and get answers that cite the passage, file and page
+they came from. Reports in PDF, Word, Markdown or text are chunked, embedded into a FAISS index and
+retrieved for a Gemini model, which is instructed to answer only from those excerpts and to say so
+when the reports do not contain the answer.
 
-Built with **LangChain + FAISS**, a **Streamlit** chat UI, and a deliberately **local-first** design: it runs end-to-end for **free and offline** out of the box, and transparently upgrades to a local LLM or a cloud API (OpenAI / Anthropic) when you make one available.
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?logo=langchain&logoColor=white)
+![FAISS](https://img.shields.io/badge/FAISS-vector%20search-0467DF)
+![Gemini](https://img.shields.io/badge/Gemini-API-4285F4?logo=googlegemini&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)
 
-> Example: *"What drove the revenue growth in Q3?"* →
-> *"Cloud Analytics subscriptions grew 24% YoY, offsetting a 9% decline in legacy on-premise licenses **[S1]**. ARR reached $182M with 114% net revenue retention **[S1]**."* — with the cited excerpt one click away.
-
----
-
-## Why this project is interesting
-
-- **Source-grounded, not hallucinated.** The model is instructed to answer *only* from retrieved excerpts, cite them as `[S1]…[Sk]`, and explicitly abstain ("I could not find this in the provided reports") when the corpus doesn't contain the answer.
-- **Graceful degradation.** A 3-tier backend cascade means the project *always runs* — no "but I don't have an API key" failure mode that kills most demos.
-- **Honest evaluation.** Ships with an offline eval harness measuring retrieval recall, a groundedness/faithfulness proxy, answer relevance, and abstention rate.
-- **Clean, modular code.** Ingestion, embeddings, vector store, generation, and evaluation are cleanly separated and unit-tested.
-
----
-
-## Architecture
-
-```
-                 ┌─────────────┐   chunk    ┌───────────────┐   embed    ┌──────────────┐
-  reports/  ───▶ │  Ingestion  │ ─────────▶ │ Text Splitter │ ─────────▶ │  Embeddings  │
- (pdf/txt/       │  (loaders)  │            │ (recursive)   │            │ ST | hashing │
-  md/docx)       └─────────────┘            └───────────────┘            └──────┬───────┘
-                                                                                │
-                                                                                ▼
-   question ─▶ embed ─▶ ┌─────────────────┐  top-k chunks  ┌──────────────┐  prompt   ┌────────────┐
-                        │  FAISS retriever │ ─────────────▶ │  Context +   │ ────────▶ │ Generator  │
-                        └─────────────────┘   + scores      │  [S#] tags   │           │ API|HF|ext │
-                                                            └──────────────┘           └─────┬──────┘
-                                                                                             ▼
-                                                              source-grounded answer + cited sources
-```
-
-The same flow as a diagram:
-
-```mermaid
-flowchart LR
-    A[Business reports<br/>pdf / txt / md / docx] --> B[Ingestion + chunking]
-    B --> C[Embeddings<br/>sentence-transformers ▸ hashing]
-    C --> D[(FAISS index)]
-    Q[User question] --> E[Embed query]
-    E --> D
-    D -->|top-k chunks + scores| F[Build context with S# tags]
-    F --> G[Generator<br/>Anthropic ▸ OpenAI ▸ flan-t5 ▸ extractive]
-    G --> H[Source-grounded answer<br/>with citations]
-    D -.-> H
-```
-
----
-
-## Quickstart
-
-```bash
-# 1. install the free, offline core (no API key, no model download needed)
-pip install -r requirements.txt
-
-# 2. create the sample reports and build the index
-python scripts/generate_sample_reports.py
-python scripts/ingest.py
-
-# 3a. ask from the command line …
-python scripts/query.py "Which marketing channel had the best ROI?"
-
-# 3b. … or launch the web app
-streamlit run app.py
-```
-
-That's it — it now answers questions using local hashing-based retrieval and an extractive, citation-aware summariser. To make answers richer, opt into a better backend below.
-
----
-
-## Backends (graceful degradation)
-
-The pipeline picks the best **available** backend automatically (`provider: auto`). You opt in simply by installing extras or setting a key — no code changes.
-
-| Tier | Generation | Embeddings | How to enable | Cost |
-|------|------------|------------|---------------|------|
-| **Cloud API** | Anthropic Claude / OpenAI GPT | OpenAI (optional) | `pip install -r requirements-api.txt` + set `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` in `.env` | API credits |
-| **Local model** | `google/flan-t5-base` (CPU) | `all-MiniLM-L6-v2` | `pip install -r requirements-llm.txt` | Free (one-time model download) |
-| **Offline fallback** *(default)* | Extractive summariser (TF-IDF sentence ranking) | sklearn hashing vectorizer | nothing — works after `requirements.txt` | Free, no downloads |
-
-Selection order for `auto`: **Anthropic → OpenAI → local flan-t5 → extractive**. Force a specific one via `config.yaml` or `RAG_LLM_PROVIDER` / `RAG_EMBEDDINGS_PROVIDER`.
-
----
+> **Q:** What drove the revenue growth in Q3?
+> **A:** Cloud Analytics subscriptions grew 24% year on year, offsetting a 9% decline in legacy
+> on-premise licences **[S1]**. ARR reached $182M with 114% net revenue retention **[S1]**.
+> *(S1: 2024_Q3_financial_review.md)*
 
 ## How it works
 
-1. **Ingestion** (`ingestion.py`) — loads `.pdf/.txt/.md/.docx`, tags each section with its `source` (and `page` for PDFs), and splits text into overlapping chunks with `RecursiveCharacterTextSplitter`.
-2. **Embeddings** (`embeddings.py`) — turns chunks into vectors. Uses sentence-transformers if installed, else a dependency-free hashing vectorizer that implements the LangChain `Embeddings` interface.
-3. **Vector store** (`vectorstore.py`) — a FAISS index, persisted to `data/index/` and reloaded on demand.
-4. **Retrieval + prompt** (`prompts.py`) — fetches the top-`k` chunks with similarity scores, labels them `[S1]…[Sk]`, and assembles a strict, citation-enforcing prompt.
-5. **Generation** (`llm.py`) — an API/local LLM writes the grounded answer, or the extractive engine stitches the most relevant cited sentences together when no model is present.
-6. **Evaluation** (`evaluation.py`) — scores retrieval and grounding offline (details below).
-
----
-
-## Project structure
-
-```
-RAG_Analytics_Assistant/
-├── app.py                       # Streamlit UI
-├── config.yaml                  # central configuration
-├── requirements*.txt            # core / -llm / -api dependency tiers
-├── src/rag_assistant/
-│   ├── config.py                # dataclass config + yaml/env loading
-│   ├── ingestion.py             # load + chunk documents
-│   ├── embeddings.py            # ST embeddings + hashing fallback
-│   ├── vectorstore.py           # FAISS build/save/load
-│   ├── prompts.py               # source-grounded prompt + context formatting
-│   ├── llm.py                   # backend cascade + extractive generator
-│   ├── pipeline.py              # end-to-end RAGPipeline
-│   └── evaluation.py            # offline RAG metrics
-├── scripts/                     # generate_sample_reports / ingest / query / evaluate
-├── eval/eval_dataset.json       # Q&A with expected sources (incl. an unanswerable one)
-├── tests/                       # pytest suite (offline, deterministic)
-└── notebooks/walkthrough.ipynb  # step-by-step pipeline demo
+```mermaid
+flowchart LR
+    A[Reports<br/>pdf / docx / md / txt] --> B[Load and chunk<br/>800 chars, 120 overlap]
+    B --> C[Embeddings]
+    C --> D[(FAISS index)]
+    Q[Question] --> E[Embed query] --> D
+    D -->|top-k chunks + scores| F[Prompt with S1..Sk tags]
+    F --> G[Gemini]
+    G --> H[Answer with citations<br/>file + page]
 ```
 
----
+1. **Ingestion** (`ingestion.py`): loads each file, records its source and page number (for PDFs),
+   and splits it with LangChain's `RecursiveCharacterTextSplitter`.
+2. **Embeddings** (`embeddings.py`): sentence-transformers `all-MiniLM-L6-v2` locally, or Gemini
+   `text-embedding-004` / OpenAI through the API.
+3. **Vector store** (`vectorstore.py`): a FAISS index saved to `data/index/` and reloaded on start.
+4. **Prompting** (`prompts.py`): the top-k chunks are tagged `[S1]..[Sk]`; the prompt requires
+   every claim to cite a tag, forbids outside knowledge, and defines the exact wording to use when
+   the answer is not in the reports.
+5. **Generation** (`llm.py`): Gemini (`gemini-2.0-flash` by default), with OpenAI or a local
+   `flan-t5-base` as alternatives.
+6. **Evaluation** (`evaluation.py`): scores retrieval and grounding on a labelled question set.
+
+### Backends
+
+The `auto` setting picks the best backend available, so the same code runs with or without keys:
+
+| Order | Generation | Embeddings | Enable with |
+|---|---|---|---|
+| 1 | Gemini | Gemini `text-embedding-004` | `GOOGLE_API_KEY` + `requirements-api.txt` |
+| 2 | OpenAI | OpenAI embeddings | `OPENAI_API_KEY` + `requirements-api.txt` |
+| 3 | Local `flan-t5-base` | sentence-transformers | `requirements-llm.txt` |
+| 4 | Extractive summariser (TF-IDF sentence ranking) | Hashing vectoriser | nothing extra |
+
+The extractive tier needs no model or key: it ranks the sentences in the retrieved chunks against
+the question and returns the best ones with their citations. It is useful for tests and offline
+demos; the API tiers give fluent answers.
 
 ## Evaluation
 
+`eval/eval_dataset.json` holds questions with the report each answer should come from, plus one
+question the reports cannot answer.
+
 ```bash
-python scripts/evaluate.py        # writes eval/results.json and eval/results.csv
+python scripts/evaluate.py       # writes eval/results.json and eval/results.csv
 ```
 
-Metrics (all computed locally with the active embedding model — no LLM-as-judge required):
+| Metric | Meaning |
+|---|---|
+| recall@k | Share of questions where the expected report is among the retrieved chunks |
+| groundedness | Share of answer sentences that closely match a retrieved chunk (a faithfulness check) |
+| answer relevance | Cosine similarity between question and answer |
+| abstention rate | How often the assistant correctly declines when the answer is not in the reports |
 
-- **recall@k** — did retrieval surface the *expected* source document for each question?
-- **groundedness** — fraction of answer sentences semantically close to a retrieved chunk (a faithfulness proxy).
-- **answer_relevance** — cosine similarity between the question and the answer.
-- **abstention_rate** — how often the assistant correctly declines when the answer isn't in the corpus (the eval set includes an unanswerable question to test this).
+## Run it
 
-Quality scales with the backend: the offline fallback is intended to prove the *plumbing* is correct; sentence-transformers + an LLM materially improve groundedness and relevance.
+```bash
+pip install -r requirements.txt            # core
+pip install -r requirements-api.txt        # Gemini / OpenAI
+cp .env.example .env                       # add GOOGLE_API_KEY
 
----
+python scripts/generate_sample_reports.py  # seven synthetic reports (finance, HR, sales, ...)
+python scripts/ingest.py                   # build the index
+python scripts/query.py "Which marketing channel had the best ROI?"
+streamlit run app.py                       # chat UI with sources and page numbers
+pytest -q                                  # unit tests (offline)
+```
+
+The Streamlit app shows the active backends, lets you upload your own reports and rebuild the
+index, and lists every cited chunk with its file, page and similarity score. `make help` lists the
+same commands.
+
+## Project structure
+
+```text
+app.py                      Streamlit UI
+config.yaml                 chunking, k, models and providers (env vars override)
+src/rag_assistant/
+    config.py               config dataclasses, yaml and env loading
+    ingestion.py            loaders and chunking
+    embeddings.py           embedding backends
+    vectorstore.py          FAISS build, save, load
+    prompts.py              citation prompt and context formatting
+    llm.py                  generation backends
+    pipeline.py             RAGPipeline: build_index() and query()
+    evaluation.py           recall@k, groundedness, relevance, abstention
+scripts/                    generate_sample_reports, ingest, query, evaluate
+eval/eval_dataset.json      labelled questions
+tests/                      pytest suite (ingestion, embeddings, pipeline, evaluation)
+notebooks/walkthrough.ipynb step-by-step run
+```
 
 ## Configuration
 
-Everything lives in `config.yaml` (chunk size, `k`, models, providers). A few switches can be overridden by environment variables (see `.env.example`):
+Settings live in `config.yaml`; these environment variables override them:
 
+```text
+RAG_LLM_PROVIDER=auto|gemini|openai|huggingface|extractive
+RAG_EMBEDDINGS_PROVIDER=auto|huggingface|gemini|openai|hashing
+RAG_LLM_MODEL=gemini-2.0-flash
+GOOGLE_API_KEY=...
+OPENAI_API_KEY=...
 ```
-RAG_LLM_PROVIDER=auto|anthropic|openai|huggingface|extractive
-RAG_EMBEDDINGS_PROVIDER=auto|huggingface|openai|hashing
-ANTHROPIC_API_KEY=...        # optional
-OPENAI_API_KEY=...           # optional
-```
 
----
+## Limitations and next steps
 
-## Extending it
-
-- Swap in **RAGAS** for LLM-judged faithfulness/answer-correctness.
-- Add a **cross-encoder reranker** after FAISS retrieval for sharper top-k.
-- Add loaders (HTML, CSV, XLSX) or a different vector store (Chroma, pgvector).
-- Add **conversational memory** for multi-turn follow-ups.
-
-## Limitations
-
-- The offline extractive backend summarises by selecting sentences, so it reads less fluently than an LLM — it's the floor, not the ceiling.
-- Hashing embeddings are lexical, not semantic; install `requirements-llm.txt` for real semantic retrieval.
-- The sample reports are synthetic and fictional.
-
-## Skills demonstrated
-
-RAG architecture · LangChain · vector search (FAISS) · embeddings · prompt engineering for grounding/citations · graceful fallback design · evaluation of LLM systems · Streamlit · clean Python packaging & tests.
+- The sample reports are synthetic; answer quality on long scanned PDFs depends on the text layer.
+- Hashing embeddings are lexical, not semantic, and are meant for offline use only.
+- Next: a cross-encoder re-ranker after retrieval, RAGAS for model-judged faithfulness, and
+  conversation memory for follow-up questions.
 
 ## License
 
-MIT — sample data is synthetic and free to use.
+MIT. The sample reports are fictional.
